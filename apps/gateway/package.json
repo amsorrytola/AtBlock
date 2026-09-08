@@ -1,0 +1,29 @@
+{
+  "name": "@atblock/gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pay": "tsx src/pay-once.ts",
+    "smoke:facilitator": "tsx src/smoke-facilitator.ts",
+    "create-topic": "tsx src/create-topic.ts",
+    "probe:graph": "tsx src/probe-graph.ts"
+  },
+  "dependencies": {
+    "@atblock/composer": "0.1.0",
+    "@atblock/ens": "0.1.0",
+    "@hashgraph/sdk": "^2.72.0",
+    "@hono/node-server": "^1.19.0",
+    "@x402/hedera": "^2.25.0",
+    "hono": "^4.9.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
