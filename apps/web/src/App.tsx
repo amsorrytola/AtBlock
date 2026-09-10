@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState, type ReactNode } from "react";
 
 const GATEWAY = import.meta.env.VITE_GATEWAY_URL ?? "http://localhost:8787";
 
 type Health = {
   ok?: boolean;
+  ready?: boolean;
   facilitatorOk?: boolean;
   payeeConfigured?: boolean;
   graphReady?: boolean;
@@ -12,6 +13,13 @@ type Health = {
   hcsTopicConfigured?: boolean;
   demoAcceptEnabled?: boolean;
   feePayer?: string | null;
+  checks?: {
+    facilitatorOk?: boolean;
+    payeeConfigured?: boolean;
+    graphReady?: boolean;
+    hcsTopicConfigured?: boolean;
+    ensConfigured?: boolean;
+  };
   explorers?: Record<string, string | undefined>;
 };
 
@@ -30,6 +38,7 @@ type EnsStatus = {
 type Directory = {
   name?: string;
   wedge?: string;
+  version?: string;
   payment?: { indicativeMaxAmountRequired?: string | null; protocolCount?: number };
   explorers?: Record<string, string | undefined>;
   endpoints?: Record<string, string>;
@@ -43,6 +52,7 @@ type Receipt = {
   metering?: string;
   settleTx?: string;
   warning?: string;
+  assetKind?: string;
 };
 
 type FactResponse = {
@@ -58,11 +68,73 @@ type FactResponse = {
   receipt?: Receipt;
 };
 
+type AgentCard = {
+  name?: string;
+  description?: string;
+  version?: string;
+  payment?: { protocol?: string; scheme?: string; network?: string; facilitator?: string };
+};
+
+type SchemaDoc = {
+  schema?: string;
+  query?: string;
+  recommendedSubgraphIds?: string[];
+  note?: string;
+};
+
+type Telemetry = {
+  path: string;
+  status: number;
+  ms: number;
+  requestId: string | null;
+};
+
 type Step = "pin" | "pay" | "prove";
+
+async function gatewayFetch(path: string, init?: RequestInit) {
+  const t0 = performance.now();
+  const res = await fetch(`${GATEWAY}${path}`, init);
+  const ms = Math.round(performance.now() - t0);
+  return {
+    res,
+    ms,
+    requestId: res.headers.get("x-request-id"),
+    responseTime: res.headers.get("x-response-time"),
+  };
+}
+
+function Signal({ on, label }: { on: boolean | undefined; label: string }) {
+  return (
+    <span className={`signal ${on ? "on" : "off"}`}>
+      <span className="signal-dot" aria-hidden />
+      {label}
+    </span>
+  );
+}
+
+function Panel({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="panel">
+      <header className="panel-head">
+        <h2>{title}</h2>
+        {action}
+      </header>
+      {children}
+    </section>
+  );
+}
 
 export function App() {
   const [step, setStep] = useState<Step>("pin");
-  const [log, setLog] = useState("Console ready. Walk Pin → Pay → Prove for the demo.");
+  const [log, setLog] = useState("Console online. Walk Pin → Pay → Prove.");
   const [status, setStatus] = useState<"idle" | "ok" | "warn" | "bad">("idle");
   const [cite, setCite] = useState<unknown>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
@@ -71,41 +143,57 @@ export function App() {
   const [health, setHealth] = useState<Health | null>(null);
   const [ens, setEns] = useState<EnsStatus | null>(null);
   const [directory, setDirectory] = useState<Directory | null>(null);
+  const [agent, setAgent] = useState<AgentCard | null>(null);
+  const [schema, setSchema] = useState<SchemaDoc | null>(null);
   const [explorers, setExplorers] = useState<Record<string, string | undefined>>({});
   const [graphBlockedReason, setGraphBlockedReason] = useState<string | null>(null);
+  const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [entered, setEntered] = useState(false);
+
+  const track = useEffectEvent((path: string, statusCode: number, ms: number, requestId: string | null) => {
+    setTelemetry({ path, status: statusCode, ms, requestId });
+  });
 
   async function refreshPinSurface() {
     setBusy(true);
     try {
-      const [hRes, eRes, dRes, iRes] = await Promise.all([
-        fetch(`${GATEWAY}/health`),
-        fetch(`${GATEWAY}/v1/ens/status`),
-        fetch(`${GATEWAY}/v1/directory`),
-        fetch(`${GATEWAY}/v1/identity`),
+      const [hPack, ePack, dPack, iPack, aPack, sPack] = await Promise.all([
+        gatewayFetch("/v1/health"),
+        gatewayFetch("/v1/ens/status"),
+        gatewayFetch("/v1/directory"),
+        gatewayFetch("/v1/identity"),
+        gatewayFetch("/.well-known/agent.json"),
+        gatewayFetch("/v1/schema/yield"),
       ]);
-      const h = (await hRes.json()) as Health;
-      const e = (await eRes.json()) as EnsStatus;
-      const d = (await dRes.json()) as Directory;
-      const identity = await iRes.json();
+
+      const h = (await hPack.res.json()) as Health;
+      const e = (await ePack.res.json()) as EnsStatus;
+      const d = (await dPack.res.json()) as Directory;
+      const identity = await iPack.res.json();
+      const agentJson = (await aPack.res.json()) as AgentCard;
+      const schemaJson = (await sPack.res.json()) as SchemaDoc;
+
+      track("/v1/health", hPack.res.status, hPack.ms, hPack.requestId);
       setHealth(h);
       setEns(e);
       setDirectory(d);
+      setAgent(agentJson);
+      setSchema(schemaJson);
       setExplorers({ ...(h.explorers ?? {}), ...(d.explorers ?? {}) });
+
+      const graphReady = h.checks?.graphReady ?? h.graphReady;
       setGraphBlockedReason(
-        h.graphReady
+        graphReady
           ? null
           : "Graph not live — set GRAPH_API_KEY + ≥2 Messari yield IDs. Fail closed (no mocks).",
       );
-      const readyBits = [
-        h.facilitatorOk ? "facilitator" : "facilitator?",
-        h.payeeConfigured ? "payee" : "payee?",
-        h.graphReady ? "graph" : "graph?",
-        e.configured && e.address ? "ens" : "ens?",
-        h.hcsTopicConfigured ? "hcs" : "hcs?",
-      ].join(" · ");
-      setStatus(h.facilitatorOk && h.payeeConfigured ? "ok" : "warn");
+
+      const facilitatorOk = h.checks?.facilitatorOk ?? h.facilitatorOk;
+      const payeeConfigured = h.checks?.payeeConfigured ?? h.payeeConfigured;
+      setStatus(facilitatorOk && payeeConfigured ? "ok" : "warn");
       setLog(
-        `Pin surface\n${readyBits}\n\n${JSON.stringify({ health: h, ens: e, directory: d, identity }, null, 2)}`,
+        `Pin surface ready\n${JSON.stringify({ health: h, ens: e, directory: d, identity }, null, 2)}`,
       );
       setStep("pin");
     } catch (err) {
@@ -117,14 +205,17 @@ export function App() {
   }
 
   useEffect(() => {
+    const t = requestAnimationFrame(() => setEntered(true));
     void refreshPinSurface();
+    return () => cancelAnimationFrame(t);
   }, []);
 
   async function askUnpaid() {
     setBusy(true);
     setStep("pay");
     try {
-      const res = await fetch(`${GATEWAY}/v1/facts/yield`);
+      const { res, ms, requestId } = await gatewayFetch("/v1/facts/yield");
+      track("/v1/facts/yield", res.status, ms, requestId);
       const body = (await res.json()) as FactResponse;
       if (res.status === 402) {
         setStatus("warn");
@@ -145,9 +236,10 @@ export function App() {
     setBusy(true);
     setStep("pay");
     try {
-      const res = await fetch(`${GATEWAY}/v1/facts/yield`, {
+      const { res, ms, requestId } = await gatewayFetch("/v1/facts/yield", {
         headers: { "X-PAYMENT": "demo" },
       });
+      track("/v1/facts/yield", res.status, ms, requestId);
       const body = (await res.json()) as FactResponse;
       if (body.receipt) setReceipt(body.receipt);
       if (body.explorers) setExplorers((prev) => ({ ...prev, ...body.explorers }));
@@ -163,7 +255,7 @@ export function App() {
       setGraphBlockedReason(null);
       setStatus(body.payment?.includes("demo") ? "warn" : "ok");
       setLog(
-        `Paid path\nNOTE: demo header is wiring only — judges need npm run pay\n${JSON.stringify(body, null, 2)}`,
+        `Paid path\nNOTE: demo header is UI wiring only — judges run npm run pay\n${JSON.stringify(body, null, 2)}`,
       );
       setStep("prove");
     } catch (e) {
@@ -179,11 +271,12 @@ export function App() {
     setBusy(true);
     setStep("prove");
     try {
-      const res = await fetch(`${GATEWAY}/v1/facts/yield/rederive`, {
+      const { res, ms, requestId } = await gatewayFetch("/v1/facts/yield/rederive", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ cite }),
       });
+      track("/v1/facts/yield/rederive", res.status, ms, requestId);
       const body = await res.json();
       setStatus(body.match ? "ok" : "bad");
       setLog(`Re-derive · verdict=${body.verdict ?? "?"}\n${JSON.stringify(body, null, 2)}`);
@@ -195,155 +288,267 @@ export function App() {
     }
   }
 
-  const chip = (ok: boolean | undefined, label: string) => (
-    <span className={`chip ${ok ? "on" : "off"}`}>{label}</span>
-  );
+  async function copyJson(label: string, value: unknown) {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(value, null, 2));
+      setCopied(label);
+      window.setTimeout(() => setCopied(null), 1600);
+    } catch {
+      setCopied("failed");
+    }
+  }
+
+  const facilitatorOk = health?.checks?.facilitatorOk ?? health?.facilitatorOk;
+  const payeeConfigured = health?.checks?.payeeConfigured ?? health?.payeeConfigured;
+  const graphReady = health?.checks?.graphReady ?? health?.graphReady;
+  const hcsOk = health?.checks?.hcsTopicConfigured ?? health?.hcsTopicConfigured;
+  const stepIndex = step === "pin" ? 0 : step === "pay" ? 1 : 2;
 
   return (
-    <main>
-      <header className="brand">
+    <div className={`shell ${entered ? "entered" : ""}`}>
+      <div className="atmosphere" aria-hidden>
+        <div className="mesh" />
+        <div className="grid" />
+      </div>
+
+      <header className="hero">
         <p className="wordmark">AtBlock</p>
-        <p className="tag">ETHOnline 2026 · Graph · Hedera · ENS</p>
+        <h1>No cite, no coin.</h1>
+        <p className="lede">
+          Metered Messari yield facts settle on Hedera x402. The Graph cite must
+          re-derive at the pinned block — or payment is worthless.
+        </p>
+        <div className="hero-cta">
+          <button type="button" disabled={busy} onClick={refreshPinSurface}>
+            Begin Pin → Pay → Prove
+          </button>
+          <a className="ghost-link" href="/qualify.html" target="_blank" rel="noreferrer">
+            Judge checklist
+          </a>
+        </div>
+        <p className="partners">The Graph · Hedera · ENS · ETHOnline 2026</p>
       </header>
 
-      <h1>No cite, no coin.</h1>
-      <p className="lede">
-        Metered Messari yield facts. Hedera x402 settle via Blocky402. Cite must
-        re-derive from The Graph at the pinned block.
-      </p>
+      <div className="telemetry" aria-live="polite">
+        <span className={`pulse ${status}`}>{status}</span>
+        <span className="mono">{GATEWAY}</span>
+        {telemetry && (
+          <>
+            <span className="mono">
+              {telemetry.path} · {telemetry.status} · {telemetry.ms}ms
+            </span>
+            {telemetry.requestId && <span className="mono truncate">req {telemetry.requestId}</span>}
+          </>
+        )}
+      </div>
 
-      <div className="rail" aria-label="demo steps">
+      <nav className="stages" aria-label="Demo stages">
+        <div className="stage-track" style={{ ["--i" as string]: stepIndex }} />
         {(
           [
-            ["pin", "01 Pin", "ENS + readiness"],
-            ["pay", "02 Pay", "402 → Blocky402"],
-            ["prove", "03 Prove", "Re-derive cite"],
+            ["pin", "01", "Pin", "ENS + readiness"],
+            ["pay", "02", "Pay", "402 → Blocky402"],
+            ["prove", "03", "Prove", "Re-derive cite"],
           ] as const
-        ).map(([id, title, sub]) => (
+        ).map(([id, num, title, sub]) => (
           <button
             key={id}
             type="button"
-            className={`rail-step ${step === id ? "active" : ""}`}
+            className={`stage ${step === id ? "active" : ""}`}
             onClick={() => setStep(id)}
           >
+            <span className="stage-num">{num}</span>
             <strong>{title}</strong>
-            <span>{sub}</span>
+            <span className="stage-sub">{sub}</span>
           </button>
         ))}
+      </nav>
+
+      <div className="signals">
+        <Signal on={facilitatorOk} label="Blocky402" />
+        <Signal on={payeeConfigured} label="Payee" />
+        <Signal on={graphReady} label={`Graph×${health?.graphEndpoints ?? 0}`} />
+        <Signal on={Boolean(ens?.configured && ens?.address)} label="ENS" />
+        <Signal on={ens?.roles?.hasRoles} label="EAC" />
+        <Signal on={hcsOk} label="HCS" />
+        <Signal on={health?.demoAcceptEnabled} label="Demo pay" />
       </div>
 
-      <div className="chips">
-        {chip(health?.facilitatorOk, "Blocky402")}
-        {chip(health?.payeeConfigured, "Payee")}
-        {chip(health?.graphReady, `Graph×${health?.graphEndpoints ?? 0}`)}
-        {chip(Boolean(ens?.configured && ens?.address), "ENS")}
-        {chip(ens?.roles?.hasRoles, "EAC roles")}
-        {chip(health?.hcsTopicConfigured, "HCS")}
-        {chip(health?.demoAcceptEnabled, "Demo pay")}
-      </div>
-
-      {graphBlockedReason && <p className="fail-closed">{graphBlockedReason}</p>}
+      {graphBlockedReason && <p className="banner warn">{graphBlockedReason}</p>}
 
       <div className="actions">
-        <button className="secondary" disabled={busy} onClick={refreshPinSurface}>
+        <button type="button" className="secondary" disabled={busy} onClick={refreshPinSurface}>
           Refresh pin
         </button>
-        <button disabled={busy} onClick={askUnpaid}>
+        <button type="button" disabled={busy} onClick={askUnpaid}>
           Ask unpaid (402)
         </button>
-        <button className="secondary" disabled={busy} onClick={payDemo}>
+        <button type="button" className="secondary" disabled={busy} onClick={payDemo}>
           Pay demo header
         </button>
-        <button className="secondary" disabled={busy || !cite} onClick={rederive}>
+        <button type="button" className="secondary" disabled={busy || !cite} onClick={rederive}>
           Re-derive
         </button>
       </div>
+      <p className="hint">Demo header is UI wiring only. Judges: <code>npm run pay -w @atblock/gateway</code></p>
 
-      {receipt && (
-        <section className="receipt" aria-label="payment receipt">
-          <strong>Receipt</strong>
-          <ul>
-            <li>status: {receipt.status}</li>
-            <li>
-              amount: {receipt.amountRequired} tinybar · {receipt.protocolCount} protocols (
-              {receipt.metering})
-            </li>
-            {receipt.settleTx && <li>settleTx: {receipt.settleTx}</li>}
-            {receipt.warning && <li className="warn-line">{receipt.warning}</li>}
-          </ul>
-        </section>
-      )}
-
-      {comparison && comparison.length > 0 && (
-        <section className="board" aria-label="yield comparison">
-          <strong>Cite board</strong>
-          <ul>
-            {comparison.map((row) => (
-              <li key={`${row.protocol}-${row.network}`}>
-                {row.protocol}
-                {row.network ? ` · ${row.network}` : ""} — TVL ${row.tvlUSD}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {(explorers.payee || explorers.topic || explorers.settlement) && (
-        <p className="explorers">
-          HashScan:{" "}
-          {explorers.payee && (
-            <a href={explorers.payee} target="_blank" rel="noreferrer">
-              payee
-            </a>
+      <div className="workspace">
+        <div className="col">
+          {receipt && (
+            <Panel
+              title="Settlement receipt"
+              action={
+                <button type="button" className="text-btn" onClick={() => void copyJson("receipt", receipt)}>
+                  {copied === "receipt" ? "Copied" : "Copy"}
+                </button>
+              }
+            >
+              <dl className="kv">
+                <div>
+                  <dt>Status</dt>
+                  <dd>{receipt.status}</dd>
+                </div>
+                <div>
+                  <dt>Amount</dt>
+                  <dd>
+                    {receipt.amountRequired} tinybar · {receipt.protocolCount} protocols
+                  </dd>
+                </div>
+                <div>
+                  <dt>Metering</dt>
+                  <dd>{receipt.metering}</dd>
+                </div>
+                {receipt.settleTx && (
+                  <div>
+                    <dt>Settle tx</dt>
+                    <dd className="truncate">{receipt.settleTx}</dd>
+                  </div>
+                )}
+                {receipt.warning && (
+                  <div>
+                    <dt>Warning</dt>
+                    <dd className="warn-text">{receipt.warning}</dd>
+                  </div>
+                )}
+              </dl>
+            </Panel>
           )}
-          {explorers.topic && (
-            <>
-              {" · "}
-              <a href={explorers.topic} target="_blank" rel="noreferrer">
-                HCS topic
-              </a>
-            </>
-          )}
-          {explorers.settlement && (
-            <>
-              {" · "}
-              <a href={explorers.settlement} target="_blank" rel="noreferrer">
-                settlement
-              </a>
-            </>
-          )}
-        </p>
-      )}
 
-      {directory?.payment?.indicativeMaxAmountRequired && (
-        <p className="meter">
-          Meter hint: {directory.payment.indicativeMaxAmountRequired} tinybar for{" "}
-          {directory.payment.protocolCount ?? "?"} protocols (price × count)
-        </p>
-      )}
+          {comparison && comparison.length > 0 && (
+            <Panel title="Cite board">
+              <ul className="board-list">
+                {comparison.map((row) => (
+                  <li key={`${row.protocol}-${row.network}`}>
+                    <span>{row.protocol}</span>
+                    <span className="muted">{row.network ?? "—"}</span>
+                    <span className="mono">${row.tvlUSD}</span>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          )}
 
-      <div className={`status ${status === "idle" ? "" : status}`}>
-        {GATEWAY}
-        {ens?.name ? ` · ${ens.name}` : ""}
-        {health?.feePayer ? ` · feePayer ${health.feePayer}` : ""}
+          <Panel
+            title="Protocol path"
+          >
+            <ol className="protocol">
+              <li>Unpaid yield request returns HTTP 402 Exact on Hedera.</li>
+              <li>Buyer settles through Blocky402 verify + settle.</li>
+              <li>Gateway composes Messari yield across ≥2 Graph deployments.</li>
+              <li>Cite must re-derive at pinned block — or no coin.</li>
+            </ol>
+          </Panel>
+        </div>
+
+        <div className="col">
+          {agent && (
+            <Panel title="Agent well-known">
+              <p className="agent-name">{agent.name}</p>
+              <p className="muted small">{agent.description}</p>
+              <p className="mono small">
+                {agent.payment?.protocol}/{agent.payment?.scheme} · {agent.payment?.network}
+              </p>
+            </Panel>
+          )}
+
+          {schema && (
+            <Panel
+              title="Yield schema"
+              action={
+                <button type="button" className="text-btn" onClick={() => void copyJson("schema", schema)}>
+                  {copied === "schema" ? "Copied" : "Copy"}
+                </button>
+              }
+            >
+              <p className="mono small">{schema.schema}</p>
+              <pre className="schema-pre">{schema.query?.slice(0, 420)}{(schema.query?.length ?? 0) > 420 ? "…" : ""}</pre>
+            </Panel>
+          )}
+
+          {(explorers.payee || explorers.topic || explorers.settlement) && (
+            <Panel title="HashScan">
+              <div className="links">
+                {explorers.payee && (
+                  <a href={explorers.payee} target="_blank" rel="noreferrer">
+                    Payee account
+                  </a>
+                )}
+                {explorers.topic && (
+                  <a href={explorers.topic} target="_blank" rel="noreferrer">
+                    HCS topic
+                  </a>
+                )}
+                {explorers.settlement && (
+                  <a href={explorers.settlement} target="_blank" rel="noreferrer">
+                    Settlement
+                  </a>
+                )}
+              </div>
+            </Panel>
+          )}
+
+          {directory?.payment?.indicativeMaxAmountRequired && (
+            <p className="meter mono">
+              Meter hint: {directory.payment.indicativeMaxAmountRequired} tinybar ×{" "}
+              {directory.payment.protocolCount ?? "?"} protocols
+              {directory.version ? ` · gateway ${directory.version}` : ""}
+            </p>
+          )}
+        </div>
       </div>
-      <pre>{log}</pre>
 
-      <p className="foot">
-        <a href="/qualify.html" target="_blank" rel="noreferrer">
-          Judge qualify checklist
-        </a>
-        {" · "}
+      <Panel
+        title="Event log"
+        action={
+          cite ? (
+            <button type="button" className="text-btn" onClick={() => void copyJson("cite", cite)}>
+              {copied === "cite" ? "Cite copied" : "Copy cite"}
+            </button>
+          ) : null
+        }
+      >
+        <div className={`status-line ${status === "idle" ? "" : status}`}>
+          {ens?.name ? `${ens.name} · ` : ""}
+          {health?.feePayer ? `feePayer ${health.feePayer}` : "awaiting facilitator feePayer"}
+        </div>
+        <pre className="log">{log}</pre>
+      </Panel>
+
+      <footer className="foot">
         <a href={`${GATEWAY}/.well-known/agent.json`} target="_blank" rel="noreferrer">
           agent.json
         </a>
-        {" · "}
+        <a href={`${GATEWAY}/v1/openapi.json`} target="_blank" rel="noreferrer">
+          openapi
+        </a>
         <a href={`${GATEWAY}/v1/schema/yield`} target="_blank" rel="noreferrer">
           yield schema
         </a>
-        {" · "}
-        Check-in #2 due ~09:29 IST Sep 11 · Final submit Sun Sep 13 12:00pm EDT
-      </p>
-    </main>
+        <a href={`${GATEWAY}/v1/metrics`} target="_blank" rel="noreferrer">
+          metrics
+        </a>
+        <span>Final submit Sun Sep 13 · 12:00pm EDT</span>
+      </footer>
+    </div>
   );
 }
