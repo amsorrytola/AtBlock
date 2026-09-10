@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AtBlock — judge qualify checklist</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a1210;
+        --ink: #e8f2ec;
+        --muted: #8aa396;
+        --accent: #2fe39a;
+        --line: #1c2e26;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(800px 400px at 10% -10%, #143d2c, transparent), var(--bg);
+        color: var(--ink);
+        padding: 2rem 1.25rem 3rem;
+        max-width: 720px;
+        margin-inline: auto;
+        line-height: 1.45;
+      }
+      h1 {
+        font-size: 1.6rem;
+        letter-spacing: -0.03em;
+        margin: 0 0 0.35rem;
+      }
+      .tag {
+        color: var(--accent);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      h2 {
+        font-size: 0.95rem;
+        color: var(--accent);
+        margin: 1.6rem 0 0.6rem;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 0.35rem;
+      }
+      label {
+        display: flex;
+        gap: 0.65rem;
+        align-items: flex-start;
+        padding: 0.45rem 0;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      input {
+        margin-top: 0.2rem;
+      }
+      code {
+        color: var(--ink);
+      }
+      .note {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="tag">AtBlock · ETHOnline 2026 · Graph · Hedera · ENS</p>
+    <h1>Judge qualify checklist</h1>
+    <p style="color: var(--muted); font-size: 0.9rem">
+      Tick only what you can show live. Demo header payment does not count.
+    </p>
+
+    <h2>Hedera — Agentic Payments</h2>
+    <label><input type="checkbox" /> Unpaid <code>GET /v1/facts/yield</code> returns HTTP 402</label>
+    <label><input type="checkbox" /> <code>npm run pay</code> settles via Blocky402 on hedera:testnet</label>
+    <label><input type="checkbox" /> Metered: price × protocol count visible in requirements/receipt</label>
+    <label><input type="checkbox" /> HashScan link for payee / settlement / HCS topic</label>
+    <label><input type="checkbox" /> <code>GET /v1/directory</code> + <code>/v1/identity</code> discovery</label>
+    <label><input type="checkbox" /> HCS audit topic message after pay/cite</label>
+
+    <h2>The Graph — Standardized + AI</h2>
+    <label><input type="checkbox" /> Live Studio key; ≥2 Messari yield deployments</label>
+    <label><input type="checkbox" /> One query shape; cite has block + deploymentIds + queryHash</label>
+    <label><input type="checkbox" /> <code>POST /rederive</code> returns match / cite-stands</label>
+    <label><input type="checkbox" /> Fail closed if Graph missing (no mock data)</label>
+    <label><input type="checkbox" /> <code>SKILL.md</code> explains agent usage</label>
+
+    <h2>ENS — ENSv2</h2>
+    <label><input type="checkbox" /> Sepolia agent name resolves in Pin / <code>/v1/ens/status</code></label>
+    <label><input type="checkbox" /> EAC grant then revoke demo (<code>grant-demo</code> / <code>revoke-demo</code>)</label>
+    <label><input type="checkbox" /> Roles central to agent spend story on camera</label>
+
+    <h2>Process</h2>
+    <label><input type="checkbox" /> Check-in #1 + #2 submitted</label>
+    <label><input type="checkbox" /> Partners selected: Graph, Hedera, ENS only</label>
+    <label><input type="checkbox" /> Human-narrated 2–4 min ≥720p video (no AI voice)</label>
+    <label><input type="checkbox" /> Public repo + AI attribution</label>
+
+    <p class="note">
+      Source: <code>memory/topics/qualification-matrix.md</code> · fill credentials via
+      <code>docs/AtBlock-Credentials-Checklist.pdf</code>
+    </p>
+  </body>
+</html>
