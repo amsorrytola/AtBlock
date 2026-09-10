@@ -14,7 +14,7 @@ Tick this during build. A row is **done** only when it can be shown in the demo 
 | Live data from a Graph provider (Studio / Market) | blocked | needs `GRAPH_API_KEY` + live IDs |
 | Not “one subgraph, no composition” | coded | multi-endpoint registry |
 | Standards leverage explained | coded | README + `SKILL.md` + `/v1/schema/yield` |
-| Public repo + 2–4 min video | todo | git init done; no remote/video yet |
+| Public repo + 2–4 min video | partial | https://github.com/amsorrytola/AtBlock public; video todo |
 
 ## The Graph — AI Tooling / Use From Scratch ($5,000)
 
@@ -65,9 +65,9 @@ Tick this during build. A row is **done** only when it can be shown in the demo 
 | Req | Status |
 |-----|--------|
 | Check-in #1 (2026-09-08 ~09:29 IST) | **missed** (not automatic DQ) |
-| Check-in #2 (2026-09-11 ~09:29 IST) | **due ~5.7h** — paste `artifacts/checkin-2-pitch.md` |
+| Check-in #2 (2026-09-11 ~09:29 IST) | **due now** — paste `artifacts/checkin-2-form.md` |
 | Final submit 2026-09-13 12:00pm EDT | todo |
-| Git history throughout (no one-commit) | init done — need ongoing commits when asked |
+| Git history throughout (no one-commit) | done | progressive history on `amsorrytola/AtBlock` |
 | AI attribution in repo | done (`AI_ATTRIBUTION.md`) |
 | Human-narrated 2–4 min ≥720p video (no AI voice) | **user records** |
 | Select exactly 3 partners on the form: Graph, Hedera, ENS | todo |

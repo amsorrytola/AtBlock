@@ -23,6 +23,7 @@
 
 | Module | Date | Summary |
 |--------|------|---------|
+| [sessions/2026-09-11-build-loop-tick-13.md](./sessions/2026-09-11-build-loop-tick-13.md) | 2026-09-11 | Health ready + Badger flag + CI |
 | [sessions/2026-09-11-checkin2-repo.md](./sessions/2026-09-11-checkin2-repo.md) | 2026-09-11 | Check-in #2 form + public GitHub |
 | [sessions/2026-09-11-checkin1-missed.md](./sessions/2026-09-11-checkin1-missed.md) | 2026-09-11 | CI1 missed recorded + X-Request-Id |
 | [sessions/2026-09-11-cors-checkin2.md](./sessions/2026-09-11-cors-checkin2.md) | 2026-09-11 | CORS + Check-in #2 paste refresh |

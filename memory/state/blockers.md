@@ -7,7 +7,7 @@
 | ID | Blocker | Impact | Since | Unblock path |
 |----|---------|--------|-------|--------------|
 | B-002 | Check-in #1 missed | Process / support signal — not automatic DQ | 2026-09-08 | Do Check-in #2 on time; final submit Sep 13 |
-| B-006 | Check-in #2 due ~**09:29 IST Fri Sep 11** | Process gate — ~5.7h · **do this** | 2026-09-10 | Paste `artifacts/checkin-2-pitch.md` |
+| B-006 | Check-in #2 due ~**09:29 IST Fri Sep 11** | Process gate — **submit now** | 2026-09-10 | Paste `artifacts/checkin-2-form.md` |
 | B-003 | No Hedera / Graph / ENS keys in `.env` | Cannot live-qualify any track | 2026-09-08 | PDF checklist / `SETUP.md` → agent writes `.env` |
 | B-005 | Final video not recorded | Submission incomplete | 2026-09-10 | Human-narrated 2–4 min ≥720p (no AI voice) |
 

@@ -86,19 +86,35 @@ async function hederaFeePayer(): Promise<string> {
   return cachedFeePayer;
 }
 
+/** Yearn eth + arb Messari yield-aggregator query-ids (see memory/topics/graph-yield-endpoints.md). */
+const DEFAULT_YIELD_SUBGRAPH_IDS = [
+  "FDLuaz69DbMADuBjJDEcLnTuPnjhZqNbFVrkNiBLGkEg",
+  "G3JZhmKKHC4mydRzD6kSz5fCWve5WDYYCyTFSJyv3SD5",
+];
+/** Optional 3rd deployment for metering demo (Badger ethereum). */
+const OPTIONAL_YIELD_SUBGRAPH_ID = "BchjnXAXXV5coiCBMQH4A8yCHXEFX9S88JFF6G3mfem4";
+
+function yieldSubgraphIds(): string[] {
+  const fromEnv = (process.env.GRAPH_YIELD_SUBGRAPH_IDS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const ids = fromEnv.length ? [...fromEnv] : [...DEFAULT_YIELD_SUBGRAPH_IDS];
+  if (process.env.GRAPH_YIELD_INCLUDE_OPTIONAL_THIRD === "1" && !ids.includes(OPTIONAL_YIELD_SUBGRAPH_ID)) {
+    ids.push(OPTIONAL_YIELD_SUBGRAPH_ID);
+  }
+  return ids;
+}
+
 function yieldEndpoints(): string[] {
   const direct = (process.env.GRAPH_YIELD_ENDPOINTS ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
   if (direct.length) return direct;
-  const ids = (process.env.GRAPH_YIELD_SUBGRAPH_IDS ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
   const key = process.env.GRAPH_API_KEY ?? "";
-  if (ids.length && key) return endpointsFromIds(ids, key);
-  return [];
+  if (!key) return [];
+  return endpointsFromIds(yieldSubgraphIds(), key);
 }
 
 async function buildRequirements(protocolCount: number): Promise<PaymentRequirements> {
@@ -197,7 +213,7 @@ app.get("/v1/directory", async (c) => {
   }
   return c.json({
     name: "AtBlock Fact Gateway",
-    version: "0.3.0",
+    version: "0.3.1",
     wedge: "no-cite-no-coin",
     description:
       "Metered Messari yield facts. Payment settles on Hedera via Blocky402. Cite must re-derive from The Graph.",
@@ -205,6 +221,7 @@ app.get("/v1/directory", async (c) => {
     facilitator: FACILITATOR_URL,
     endpoints: {
       health: `${SERVICE_BASE}/health`,
+      ready: `${SERVICE_BASE}/v1/health`,
       yieldFact: `${SERVICE_BASE}/v1/facts/yield`,
       yieldSchema: `${SERVICE_BASE}/v1/schema/yield`,
       rederive: `${SERVICE_BASE}/v1/facts/yield/rederive`,
@@ -258,12 +275,13 @@ app.get("/.well-known/agent.json", (c) => {
   return c.json({
     name: "AtBlock Fact Gateway",
     description: "No cite, no coin — metered Messari yield facts on Hedera x402 / Blocky402",
-    version: "0.3.0",
+    version: "0.3.1",
     documentation: `${SERVICE_BASE}/v1/directory`,
     endpoints: {
       directory: `${SERVICE_BASE}/v1/directory`,
       identity: `${SERVICE_BASE}/v1/identity`,
       health: `${SERVICE_BASE}/health`,
+      ready: `${SERVICE_BASE}/v1/health`,
       yieldFact: `${SERVICE_BASE}/v1/facts/yield`,
       yieldSchema: `${SERVICE_BASE}/v1/schema/yield`,
       rederive: `${SERVICE_BASE}/v1/facts/yield/rederive`,
@@ -292,10 +310,12 @@ app.get("/v1/schema/yield", async (c) => {
   return c.json({
     schema: "messari-yield-aggregator",
     query: YIELD_QUERY,
-    recommendedSubgraphIds: (process.env.GRAPH_YIELD_SUBGRAPH_IDS ?? "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean),
+    recommendedSubgraphIds: yieldSubgraphIds(),
+    optionalThird: {
+      flag: "GRAPH_YIELD_INCLUDE_OPTIONAL_THIRD=1",
+      subgraphId: OPTIONAL_YIELD_SUBGRAPH_ID,
+      label: "badgerdao-ethereum",
+    },
     note: "Live compose requires GRAPH_API_KEY — this route never mocks data.",
   });
 });
@@ -311,7 +331,7 @@ app.get("/v1/payments/schedule", (c) => {
   );
 });
 
-app.get("/health", async (c) => {
+async function buildHealthPayload() {
   let facilitatorOk = false;
   let feePayer: string | null = null;
   try {
@@ -321,20 +341,27 @@ app.get("/health", async (c) => {
   } catch {
     facilitatorOk = false;
   }
-  const graphReady = yieldEndpoints().length >= 2 && Boolean(process.env.GRAPH_API_KEY);
-  return c.json({
+  const endpoints = yieldEndpoints();
+  const graphReady = endpoints.length >= 2 && Boolean(process.env.GRAPH_API_KEY);
+  const payeeConfigured = Boolean(PAYEE && PAYEE !== "0.0.0");
+  const liveReady = facilitatorOk && payeeConfigured && graphReady;
+  return {
     ok: true,
+    ready: liveReady,
     service: "atblock-gateway",
-    version: "0.3.0",
+    version: "0.3.1",
     network: NETWORK,
     facilitator: FACILITATOR_URL,
-    facilitatorOk,
+    checks: {
+      facilitatorOk,
+      payeeConfigured,
+      graphReady,
+      hcsTopicConfigured: Boolean(process.env.HCS_TOPIC_ID),
+      ensConfigured: Boolean(process.env.ENS_RPC_URL && process.env.ENS_AGENT_NAME),
+    },
     feePayer,
-    payeeConfigured: Boolean(PAYEE && PAYEE !== "0.0.0"),
-    graphEndpoints: yieldEndpoints().length,
-    graphReady,
-    hcsTopicConfigured: Boolean(process.env.HCS_TOPIC_ID),
-    ensConfigured: Boolean(process.env.ENS_RPC_URL && process.env.ENS_AGENT_NAME),
+    graphEndpoints: endpoints.length,
+    subgraphIdsConfigured: yieldSubgraphIds().length,
     demoAcceptEnabled: process.env.DEMO_ACCEPT_PAYMENT === "1",
     assetKind: assetKindLabel(ASSET),
     identity: `${SERVICE_BASE}/v1/identity`,
@@ -343,7 +370,15 @@ app.get("/health", async (c) => {
       payee: PAYEE || undefined,
       topicId: process.env.HCS_TOPIC_ID,
     }),
-  });
+  };
+}
+
+app.get("/health", async (c) => c.json(await buildHealthPayload()));
+
+/** Judge/agent readiness (503 when live path not fully configured). */
+app.get("/v1/health", async (c) => {
+  const body = await buildHealthPayload();
+  return c.json(body, body.ready ? 200 : 503);
 });
 
 app.get("/v1/ens/status", async (c) => {

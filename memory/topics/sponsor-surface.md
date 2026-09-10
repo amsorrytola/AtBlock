@@ -1,6 +1,6 @@
 # Topic: Sponsor surface (maximize prize extras)
 
-> Last updated: 2026-09-11 (continue without keys)  
+> Last updated: 2026-09-11 (tick 13 — health ready + CI)  
 > Status: active — deepen until live qualify, then polish demo
 
 Use this as the build-loop backlog. Prefer items that show on camera.
@@ -26,13 +26,15 @@ Use this as the build-loop backlog. Prefer items that show on camera.
 | Agent well-known discovery | coded | `GET /.well-known/agent.json` |
 | Idempotency-Key retries | coded | 15m in-memory cache |
 | POST yield (agent clients) | coded | same handler as GET |
+| Ready / health checks | coded | `GET /health` + `GET /v1/health` (503 until live) |
 
 ## The Graph
 
 | Surface | Status | Where |
 |---------|--------|-------|
 | Messari Yield Aggregator schema | coded | `YIELD_QUERY` |
-| ≥2 deployments one query | coded | Yearn eth + arb IDs |
+| ≥2 deployments one query | coded | Yearn eth + arb IDs (defaults when key set) |
+| Optional 3rd (Badger) | coded | `GRAPH_YIELD_INCLUDE_OPTIONAL_THIRD=1` |
 | Indexing-error refuse | coded | composer |
 | Agent SKILL.md | coded | root |
 | Probe CLI | coded | `probe:graph` (+ `--dry` schema) |
@@ -60,16 +62,17 @@ Use this as the build-loop backlog. Prefer items that show on camera.
 |---------|--------|
 | Credentials PDF | done (`docs/`) |
 | AI attribution | done |
-| Progressive git commits | waiting on user ask |
+| Progressive git commits | done — public `amsorrytola/AtBlock` |
 | Human demo video | B-005 |
 | Web receipt + cite board | coded | `apps/web` Pin/Pay/Prove |
 | README payment sequence | coded | root README |
 | Graph fail-closed UI copy | coded | web banner when `graphReady` false |
 | Auto-load repo `.env` | coded | `load-env.ts` gateway + ens CLIs |
 | `npm run qualify` gate | coded | `scripts/qualify.mjs` |
-| Optional 3rd Messari ID | documented | Badger `BchjnXA…` in graph-yield-endpoints |
+| Optional 3rd Messari ID | coded | Badger flag + graph-yield-endpoints |
 | Final-submit countdown | coded | `topics/final-submit-countdown.md` |
 | Web qualify checklist link | coded | `/qualify.html` in web public |
 | MIT LICENSE | done | root `LICENSE` |
 | SETUP Check-in #2 first | done | `SETUP.md` |
 | docker-compose | coded | root `docker-compose.yml` |
+| GitHub Actions CI | coded | `.github/workflows/ci.yml` |

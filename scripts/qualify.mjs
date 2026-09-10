@@ -26,7 +26,8 @@ console.log(
       step: "preflight",
       envFilePresent: hasEnv,
       checkin2Due: "~09:29 IST Fri Sep 11 2026",
-      checkin2Paste: "memory/artifacts/checkin-2-pitch.md",
+      checkin2Paste: "memory/artifacts/checkin-2-form.md",
+      repo: "https://github.com/amsorrytola/AtBlock",
       judgeChecklist: "docs/atblock-judge-qualify-checklist.html",
       note: hasEnv
         ? "env present — after smoke, run: npm run create-topic -w @atblock/gateway && npm run pay -w @atblock/gateway && npm run probe:graph -w @atblock/gateway"
