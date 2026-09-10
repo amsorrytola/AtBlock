@@ -41,7 +41,7 @@ apps/gateway       x402 fact API (Blocky402 + HCS + HashScan + directory + ident
 apps/web           Pin → Pay → Prove console (receipt + cite board)
 packages/composer  Messari Yield Aggregator query × N deployments
 packages/ens       Sepolia resolve + EAC revoke + revoke-demo CLI
-docs/              Credentials checklist PDF + check-in paste
+docs/              Credentials checklist, architecture, check-in paste
 ```
 
 ## Setup
@@ -78,4 +78,4 @@ Buyer → gateway 402 → `@x402/hedera` Exact → Blocky402 `/verify` + `/settl
 
 ## AI attribution
 
-See [AI_ATTRIBUTION.md](./AI_ATTRIBUTION.md). Built with Cursor assistance during ETHOnline 2026; human team owns check-ins, demo video narration, and direction.
+See [AI_ATTRIBUTION.md](./AI_ATTRIBUTION.md). Human-led product and demo; limited AI assistance for boilerplate.

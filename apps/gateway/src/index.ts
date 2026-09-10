@@ -14,6 +14,8 @@ import { loadEnv } from "./load-env.js";
 import { log, requestId } from "./logger.js";
 import { buildReceipt } from "./receipt.js";
 import { buildPaymentScheduleInfo } from "./schedule.js";
+import { buildOpenApiDocument } from "./openapi.js";
+import { metricsSnapshot, notePaidFact, noteRederive, noteRequest } from "./metrics.js";
 
 loadEnv();
 
@@ -28,7 +30,7 @@ app.use(
   cors({
     origin: "*",
     allowHeaders: ["Content-Type", "X-PAYMENT", "X-Payment", "Idempotency-Key", "idempotency-key", "X-Request-Id"],
-    exposeHeaders: ["X-Request-Id"],
+    exposeHeaders: ["X-Request-Id", "X-Response-Time"],
   }),
 );
 
@@ -36,13 +38,16 @@ app.use("*", async (c, next) => {
   const rid = c.req.header("x-request-id") ?? requestId();
   const t0 = Date.now();
   await next();
+  const ms = Date.now() - t0;
   c.res.headers.set("X-Request-Id", rid);
+  c.res.headers.set("X-Response-Time", `${ms}ms`);
+  noteRequest(c.req.path, c.res.status);
   log.info("request", {
     requestId: rid,
     method: c.req.method,
     path: c.req.path,
     status: c.res.status,
-    ms: Date.now() - t0,
+    ms,
   });
 });
 
@@ -213,7 +218,7 @@ app.get("/v1/directory", async (c) => {
   }
   return c.json({
     name: "AtBlock Fact Gateway",
-    version: "0.3.1",
+    version: "0.4.0",
     wedge: "no-cite-no-coin",
     description:
       "Metered Messari yield facts. Payment settles on Hedera via Blocky402. Cite must re-derive from The Graph.",
@@ -222,6 +227,8 @@ app.get("/v1/directory", async (c) => {
     endpoints: {
       health: `${SERVICE_BASE}/health`,
       ready: `${SERVICE_BASE}/v1/health`,
+      openapi: `${SERVICE_BASE}/v1/openapi.json`,
+      metrics: `${SERVICE_BASE}/v1/metrics`,
       yieldFact: `${SERVICE_BASE}/v1/facts/yield`,
       yieldSchema: `${SERVICE_BASE}/v1/schema/yield`,
       rederive: `${SERVICE_BASE}/v1/facts/yield/rederive`,
@@ -275,13 +282,15 @@ app.get("/.well-known/agent.json", (c) => {
   return c.json({
     name: "AtBlock Fact Gateway",
     description: "No cite, no coin — metered Messari yield facts on Hedera x402 / Blocky402",
-    version: "0.3.1",
+    version: "0.4.0",
     documentation: `${SERVICE_BASE}/v1/directory`,
     endpoints: {
       directory: `${SERVICE_BASE}/v1/directory`,
       identity: `${SERVICE_BASE}/v1/identity`,
       health: `${SERVICE_BASE}/health`,
       ready: `${SERVICE_BASE}/v1/health`,
+      openapi: `${SERVICE_BASE}/v1/openapi.json`,
+      metrics: `${SERVICE_BASE}/v1/metrics`,
       yieldFact: `${SERVICE_BASE}/v1/facts/yield`,
       yieldSchema: `${SERVICE_BASE}/v1/schema/yield`,
       rederive: `${SERVICE_BASE}/v1/facts/yield/rederive`,
@@ -349,7 +358,7 @@ async function buildHealthPayload() {
     ok: true,
     ready: liveReady,
     service: "atblock-gateway",
-    version: "0.3.1",
+    version: "0.4.0",
     network: NETWORK,
     facilitator: FACILITATOR_URL,
     checks: {
@@ -366,6 +375,8 @@ async function buildHealthPayload() {
     assetKind: assetKindLabel(ASSET),
     identity: `${SERVICE_BASE}/v1/identity`,
     wellKnown: `${SERVICE_BASE}/.well-known/agent.json`,
+    openapi: `${SERVICE_BASE}/v1/openapi.json`,
+    metrics: `${SERVICE_BASE}/v1/metrics`,
     explorers: explorerBundle({
       payee: PAYEE || undefined,
       topicId: process.env.HCS_TOPIC_ID,
@@ -380,6 +391,16 @@ app.get("/v1/health", async (c) => {
   const body = await buildHealthPayload();
   return c.json(body, body.ready ? 200 : 503);
 });
+
+app.get("/v1/openapi.json", (c) => c.json(buildOpenApiDocument(SERVICE_BASE)));
+
+app.get("/v1/metrics", (c) =>
+  c.json({
+    service: "atblock-gateway",
+    version: "0.4.0",
+    ...metricsSnapshot(),
+  }),
+);
 
 app.get("/v1/ens/status", async (c) => {
   const rpc = process.env.ENS_RPC_URL;
@@ -552,6 +573,7 @@ async function handleYieldFact(c: import("hono").Context) {
     }),
   };
   if (idemKey) idempotencyCache.set(idemKey, { at: Date.now(), body: okBody, status: 200 });
+  notePaidFact();
   return c.json(okBody);
 }
 
@@ -574,6 +596,7 @@ app.post("/v1/facts/yield/rederive", async (c) => {
       payload: { match, originalHash: body.cite.queryHash, againHash: again.queryHash },
     });
 
+    noteRederive(match);
     return c.json({
       match,
       again,
