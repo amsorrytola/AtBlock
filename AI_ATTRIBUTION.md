@@ -6,7 +6,7 @@ This project was developed with AI coding assistance (**Cursor**) during ETHOnli
 
 - Scaffolding, TypeScript/Node gateway and web demo structure
 - Integration wiring for x402 / Blocky402 / Graph / ENSv2 against public docs and starter kits
-- README, memory docs, and qualification checklist drafting
+- README and qualification checklist drafting
 
 ## Human contribution
 
@@ -15,6 +15,6 @@ This project was developed with AI coding assistance (**Cursor**) during ETHOnli
 - Account/key creation (Graph Studio, Hedera testnet, ENS Sepolia)
 - Final demo video (human narration; no AI voiceover)
 
-## Spec / planning artifacts
+## Spec / planning
 
-Durable decisions and loop logs are under `memory/` (included in the submission repo).
+Product lock and agent handoff notes live in a local `memory/` tree (gitignored — not part of the public submission).

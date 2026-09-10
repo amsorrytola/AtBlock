@@ -26,7 +26,7 @@ console.log(
       step: "preflight",
       envFilePresent: hasEnv,
       checkin2Due: "~09:29 IST Fri Sep 11 2026",
-      checkin2Paste: "memory/artifacts/checkin-2-form.md",
+      checkin2Paste: "docs/checkin-2.md",
       repo: "https://github.com/amsorrytola/AtBlock",
       judgeChecklist: "docs/atblock-judge-qualify-checklist.html",
       note: hasEnv

@@ -12,8 +12,6 @@
 
 ## GitHub repository (must be public)
 
-Paste after push succeeds (replace if your username/repo differs):
-
 ```
 https://github.com/amsorrytola/AtBlock
 ```
@@ -24,9 +22,7 @@ https://github.com/amsorrytola/AtBlock
 Agents pay for Graph-cited vault facts on Hedera x402 — no cite, no coin.
 ```
 
-(79 characters)
-
-## 👩‍⚕️ Your Plan
+## Your Plan
 
 ```
 Ship Pin → Pay → Prove end-to-end before final submit (Sun Sep 13):
@@ -50,7 +46,7 @@ Wedge: unpaid GET /v1/facts/yield → 402 Exact (Hedera) → settle via api.test
 
 ## Will you be joining us for Live Judging to qualify for Top 10 Finalist?
 
-**Yes** — pick Yes if you can present live when called. (Pick No only if you cannot attend.)
+**Yes** — pick Yes if you can present live when called.
 
 ## Are you on track for submitting a project?
 
@@ -58,13 +54,9 @@ Wedge: unpaid GET /v1/facts/yield → 402 Exact (Hedera) → settle via api.test
 
 ## Are there any prizes in particular you're going for?
 
-Select / prioritize:
-
 1. **The Graph**
 2. **Hedera**
 3. **ENS**
-
-(Max 3 partners — these match the build.)
 
 ## What progress did you make since the last check-in?
 

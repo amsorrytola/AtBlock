@@ -4,9 +4,9 @@ Do these in order. Secrets stay in `.env` only (never commit).
 
 ## 0. Check-in #2 (due ~09:29 IST Fri Sep 11) — do first tonight/AM
 
-Paste from [`memory/artifacts/checkin-2-pitch.md`](./memory/artifacts/checkin-2-pitch.md) into the ETHGlobal dashboard.
+Paste from [`docs/checkin-2.md`](./docs/checkin-2.md) into the ETHGlobal dashboard.
 
-Confirm Check-in #1 was submitted ([`checkin-1-pitch.md`](./memory/artifacts/checkin-1-pitch.md)).
+Check-in #1 was missed (not automatic DQ) — prioritize #2 + final submit.
 
 ## 1. Hedera testnet accounts
 
@@ -57,5 +57,5 @@ The Graph · Hedera · ENS only.
 
 ## Final submit
 
-Sun Sep 13 2026 **12:00pm EDT** (~21:30 IST) — see `memory/topics/final-submit-countdown.md`.
+Sun Sep 13 2026 **12:00pm EDT** (~21:30 IST).
 Human-narrated 2–4 min ≥720p video required (no AI voice).
