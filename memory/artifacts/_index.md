@@ -17,6 +17,8 @@
 | A-014 | Blocky402 docs | url | https://blocky402.com/docs/introduction/ | Hedera x402 facilitator | 2026-09-08 |
 | A-021 | Blocky402 testnet API | url | https://api.testnet.blocky402.com | Live `/supported` + `/health` | 2026-09-08 |
 | A-022 | Hedera testnet feePayer | other | `0.0.7162784` | From `/supported` (may change) | 2026-09-08 |
+| A-026 | Public GitHub repo | url | https://github.com/amsorrytola/AtBlock | Check-in #2 + judges | 2026-09-11 |
+| A-027 | Check-in #2 form paste | repo-path | `memory/artifacts/checkin-2-form.md` | ETHGlobal dashboard fields | 2026-09-11 |
 | A-023 | Credentials checklist PDF | repo-path | `docs/AtBlock-Credentials-Checklist.pdf` | What user must collect now | 2026-09-10 |
 | A-024 | Gateway directory | path | `GET /v1/directory` | Hedera discovery extra | 2026-09-10 |
 | A-025 | Yearn Messari IDs | other | `FDLuaz…`, `G3JZh…` | eth + arb yield-aggregator | 2026-09-08 |
