@@ -4,40 +4,66 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AtBlock — judge qualify checklist</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <style>
       :root {
-        color-scheme: dark;
-        --bg: #0a1210;
-        --ink: #e8f2ec;
-        --muted: #8aa396;
-        --accent: #2fe39a;
-        --line: #1c2e26;
-        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        --bg: #e9eef3;
+        --ink: #0a1628;
+        --muted: #5a6b7d;
+        --accent: #0f766e;
+        --line: #c5d0db;
+        --display: "Bricolage Grotesque", sans-serif;
+        --mono: "IBM Plex Mono", ui-monospace, monospace;
       }
       body {
         margin: 0;
-        background: radial-gradient(800px 400px at 10% -10%, #143d2c, transparent), var(--bg);
         color: var(--ink);
+        font-family: var(--mono);
+        background:
+          radial-gradient(ellipse 50% 40% at 15% 0%, rgba(15, 118, 110, 0.16), transparent 55%),
+          var(--bg);
         padding: 2rem 1.25rem 3rem;
         max-width: 720px;
         margin-inline: auto;
         line-height: 1.45;
       }
+      .brand {
+        font-family: var(--display);
+        font-size: clamp(2.4rem, 8vw, 3.2rem);
+        font-weight: 700;
+        letter-spacing: -0.06em;
+        margin: 0;
+        line-height: 0.95;
+      }
+      .tag {
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 0.55rem 0 1.25rem;
+      }
       h1 {
-        font-size: 1.6rem;
+        font-family: var(--display);
+        font-size: 1.35rem;
         letter-spacing: -0.03em;
         margin: 0 0 0.35rem;
       }
-      .tag {
-        color: var(--accent);
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+      .lede {
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin: 0 0 1.5rem;
       }
       h2 {
+        font-family: var(--display);
         font-size: 0.95rem;
         color: var(--accent);
-        margin: 1.6rem 0 0.6rem;
+        margin: 1.5rem 0 0.55rem;
         border-bottom: 1px solid var(--line);
         padding-bottom: 0.35rem;
       }
@@ -47,26 +73,32 @@
         align-items: flex-start;
         padding: 0.45rem 0;
         color: var(--muted);
-        font-size: 0.85rem;
+        font-size: 0.82rem;
       }
       input {
         margin-top: 0.2rem;
+        accent-color: var(--accent);
       }
       code {
         color: var(--ink);
       }
       .note {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         color: var(--muted);
-        margin-top: 1.5rem;
+        margin-top: 1.75rem;
+      }
+      a {
+        color: var(--accent);
       }
     </style>
   </head>
   <body>
-    <p class="tag">AtBlock · ETHOnline 2026 · Graph · Hedera · ENS</p>
+    <p class="brand">AtBlock</p>
+    <p class="tag">ETHOnline 2026 · Graph · Hedera · ENS</p>
     <h1>Judge qualify checklist</h1>
-    <p style="color: var(--muted); font-size: 0.9rem">
-      Tick only what you can show live. Demo header payment does not count.
+    <p class="lede">
+      Tick only what you can show live. Demo header payment does not count — use
+      <code>npm run pay</code>.
     </p>
 
     <h2>Hedera — Agentic Payments</h2>
@@ -74,7 +106,7 @@
     <label><input type="checkbox" /> <code>npm run pay</code> settles via Blocky402 on hedera:testnet</label>
     <label><input type="checkbox" /> Metered: price × protocol count visible in requirements/receipt</label>
     <label><input type="checkbox" /> HashScan link for payee / settlement / HCS topic</label>
-    <label><input type="checkbox" /> <code>GET /v1/directory</code> + <code>/v1/identity</code> discovery</label>
+    <label><input type="checkbox" /> <code>GET /v1/directory</code> + <code>/v1/identity</code> + OpenAPI discovery</label>
     <label><input type="checkbox" /> HCS audit topic message after pay/cite</label>
 
     <h2>The Graph — Standardized + AI</h2>
@@ -86,18 +118,19 @@
 
     <h2>ENS — ENSv2</h2>
     <label><input type="checkbox" /> Sepolia agent name resolves in Pin / <code>/v1/ens/status</code></label>
-    <label><input type="checkbox" /> EAC grant then revoke demo (<code>grant-demo</code> / <code>revoke-demo</code>)</label>
+    <label><input type="checkbox" /> EAC grant then revoke demo (<code>pin-demo</code> / grant / revoke CLIs)</label>
     <label><input type="checkbox" /> Roles central to agent spend story on camera</label>
 
     <h2>Process</h2>
-    <label><input type="checkbox" /> Check-in #1 + #2 submitted</label>
+    <label><input type="checkbox" /> Check-in #2 submitted (paste <code>docs/checkin-2.md</code>)</label>
     <label><input type="checkbox" /> Partners selected: Graph, Hedera, ENS only</label>
     <label><input type="checkbox" /> Human-narrated 2–4 min ≥720p video (no AI voice)</label>
-    <label><input type="checkbox" /> Public repo + AI attribution</label>
+    <label><input type="checkbox" /> Public repo + minimal AI attribution note</label>
 
     <p class="note">
-      Source: judge qualification checklist · fill credentials via
-      <code>docs/AtBlock-Credentials-Checklist.pdf</code>
+      Credentials: <code>docs/AtBlock-Credentials-Checklist.pdf</code> · Architecture:
+      <a href="/../docs/architecture.md">docs/architecture.md</a> in repo · Console:
+      <a href="/">Pin → Pay → Prove</a>
     </p>
   </body>
 </html>
