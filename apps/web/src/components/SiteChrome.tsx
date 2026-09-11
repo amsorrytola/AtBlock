@@ -19,15 +19,17 @@ export function SiteHeader() {
         <img src="/brand/logo.png" alt="" width={36} height={36} />
         <span>AtBlock</span>
       </NavLink>
-      <button
-        type="button"
-        className="nav-toggle"
-        aria-expanded={open}
-        aria-controls="site-nav"
-        onClick={() => setOpen((v) => !v)}
-      >
-        Menu
-      </button>
+      <div className="header-tools">
+        <button
+          type="button"
+          className="nav-toggle"
+          aria-expanded={open}
+          aria-controls="site-nav"
+          onClick={() => setOpen((v) => !v)}
+        >
+          Menu
+        </button>
+      </div>
       <nav id="site-nav" className={`site-nav ${open ? "open" : ""}`} aria-label="Primary">
         {links.map((l) => (
           <NavLink

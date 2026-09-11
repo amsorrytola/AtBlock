@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from "react-router-dom";
+import { CommandPalette } from "./CommandPalette";
 import { SiteFooter, SiteHeader } from "./SiteChrome";
 
 export function Layout() {
@@ -11,6 +12,7 @@ export function Layout() {
         <div className="grid" />
       </div>
       <SiteHeader />
+      <CommandPalette />
       <main className="page entered" key={location.pathname}>
         <Outlet />
       </main>
